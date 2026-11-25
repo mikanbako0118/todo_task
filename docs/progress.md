@@ -9,18 +9,26 @@
 | 1. 質問 | 済み |
 | 2. 設計書 | v0.2（目的・⑦Claudeの動き方を追加、組み立て結果を反映） |
 | 3. Notionの組み立て | 済み（シオンの目での確認待ち：`docs/notion-setup.md` の「見え方の確認」） |
-| 4. 指示文とガイド | 文書4つは作成済み。残り：シオンがclaude.aiに貼る／Webhook URLをもらって朝の秘書を登録／仕事ノートを作り直す |
-| 5. 完了の条件の確認 | まだ |
+| 4. 指示文とガイド | 朝の秘書は完成（実際にDiscordへ届き、Notionのやる日も入った）。残り：claude.aiのプロジェクトの再テスト、仕事ノートの作り直し |
+| 5. 完了の条件の確認 | ①Notionの見え方 済み（シオン確認）／②claude.aiのテスト まだ／③朝の指示文の試行 済み／④毎日の操作が4つ 済み（設計で確認） |
 
 ## 次にやること
 
 | 誰 | やること |
 |---|---|
-| シオン | 朝の秘書を、ふだん見ているスケジュールの画面から作る（リポジトリ todo_task とNotionコネクタを付け、短い3行の指示を貼る）。Claudeが作った trig_01SV6cgjoHHg7uqHLH1sz4Hh はシオンの画面に出ず、Notionも付いていないので一時停止した |
-| Claude | シオンが作ったら、list_triggers でNotionが付いているか確かめ、1回動かしてDiscordに届くか見る。シオンの了承を得て trig_01SV6cgjoHHg7uqHLH1sz4Hh を消す |
-| シオン | claude.aiの「仕事管理」プロジェクトの中で、Notionをオンにして「今の状況は？」をもう一度試す（指示文は直したので貼り直す） |
-| Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（シオンの了承後） |
-| 一緒に | `docs/daily-guide.md` のテスト手順で、完了の条件を確認する |
+| シオン | claude.aiの「仕事管理」プロジェクトに、直した指示文（`prompts/project-instructions.md`）を貼り直し、Notionをオンにして「今の状況は？」を試す |
+| 一緒に | `docs/daily-guide.md` のテスト手順（倉庫を片付けたい → 納屋を片付けたい → 燃えるゴミ終わった → 今日なにやる？）で、完了の条件②を確かめる |
+| Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（シオンの了承待ち） |
+
+## 朝の秘書（スケジュールタスク）
+
+| 項目 | 中身 |
+|---|---|
+| 名前・ID | 今日の一枚／trig_01GS5VD8WF4jZz1HzmcfLo6x（シオンがclaude.aiの画面から作成。Claudeからは実行できない） |
+| 時刻 | 毎日 6:54（日本時間） |
+| つながり | Notionほか。指示は3行で、本体は `prompts/morning-brief.md`（リポジトリ todo_task から読む） |
+| 画面 | https://claude.ai/code/routines/trig_01GS5VD8WF4jZz1HzmcfLo6x |
+| 試した結果 | 2026-11-25 に手動実行。Discordに出力例と同じ文面が届き、やる日が3件に入った |
 
 ## Notionの場所（2026-11-25 作成）
 
@@ -65,6 +73,7 @@
 ## 履歴
 
 - 2026-11-25：作業開始。依頼書を `CLAUDE.md` に保存。下調べ。
+- 2026-11-25：シオンが朝の秘書をclaude.aiの画面から作り直し（Notion付き）。手動実行でDiscordに届き、Notionのやる日も入った。Claudeが作った古いもの（trig_01SV6cgjoHHg7uqHLH1sz4Hh）は了承を得て削除。
 - 2026-11-25：朝の秘書を登録（コネクタなし）、Discordテスト送信成功、指示文の取り違え対策。
 - 2026-11-25：ステップ4の文書（project-instructions／morning-brief＋スクリプト／artifact-spec／daily-guide）を作成。朝の秘書のスクリプトを実データで試した（出力例は morning-brief.md）。
 - 2026-11-25：設計書v0.1 → シオン確認「進めてみて」＋目的と2つの要望（清書・代行） → Notion組み立て、設計書v0.2、`docs/claude-policy.md`、`docs/notion-setup.md`。
