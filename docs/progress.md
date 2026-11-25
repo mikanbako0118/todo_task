@@ -16,8 +16,8 @@
 
 | 誰 | やること |
 |---|---|
-| シオン | 朝の秘書にNotionをつなぐ。A：claude.aiのスケジュールタスクの画面で「今日の一枚（毎朝）」にNotionコネクタを足す。できなければB |
-| Claude | B：新しいセッション（todo_task を選んで開始）で、スケジュールタスク trig_01SV6cgjoHHg7uqHLH1sz4Hh を消して、同じ指示文で作り直す（Webhook URLはシオンにもう一度もらう。ファイルには書かない）。そのあと1回動かして、Discordに届くか確かめる |
+| シオン | 朝の秘書を、ふだん見ているスケジュールの画面から作る（リポジトリ todo_task とNotionコネクタを付け、短い3行の指示を貼る）。Claudeが作った trig_01SV6cgjoHHg7uqHLH1sz4Hh はシオンの画面に出ず、Notionも付いていないので一時停止した |
+| Claude | シオンが作ったら、list_triggers でNotionが付いているか確かめ、1回動かしてDiscordに届くか見る。シオンの了承を得て trig_01SV6cgjoHHg7uqHLH1sz4Hh を消す |
 | シオン | claude.aiの「仕事管理」プロジェクトの中で、Notionをオンにして「今の状況は？」をもう一度試す（指示文は直したので貼り直す） |
 | Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（シオンの了承後） |
 | 一緒に | `docs/daily-guide.md` のテスト手順で、完了の条件を確認する |
