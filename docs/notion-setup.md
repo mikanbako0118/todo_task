@@ -20,6 +20,8 @@
  ├─ 🗺 全体マップ   タイムライン view://4237db70-148e-817c-af15-000ce1534611
  ├─ 🗂 ボード       ボード      view://4237db70-148e-8162-bcbc-000c2abae395
  └─ 📦 データ置き場 https://app.notion.com/p/4237db70148e81dfbe0ade9bc0b8a01c
+      ├─ 🤖 Claudeへの指示 https://app.notion.com/p/4237db70148e819f8977cb159f777a21
+      │    claude.aiのClaudeが会話の最初に読むルール（原本：prompts/claude-rules.md）
       ├─ 📁 プロジェクト https://app.notion.com/p/4237db70148e8104bfa4e1a4f194180a
       │    データソース collection://4237db70-148e-818e-8990-000bb6760ae8
       │    ビュー「すべて」（表） view://4237db70-148e-815b-85be-000cd955e3bb
