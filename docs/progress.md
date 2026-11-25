@@ -9,17 +9,18 @@
 | 1. 質問 | 済み |
 | 2. 設計書 | v0.2（目的・⑦Claudeの動き方を追加、組み立て結果を反映） |
 | 3. Notionの組み立て | 済み（シオンの目での確認待ち：`docs/notion-setup.md` の「見え方の確認」） |
-| 4. 指示文とガイド | まだ |
+| 4. 指示文とガイド | 文書4つは作成済み。残り：シオンがclaude.aiに貼る／Webhook URLをもらって朝の秘書を登録／仕事ノートを作り直す |
 | 5. 完了の条件の確認 | まだ |
 
 ## 次にやること
 
 | 誰 | やること |
 |---|---|
-| シオン | Notionの「📒 仕事管理」を開いて、`docs/notion-setup.md` の「見え方の確認」と同じか見る |
-| シオン | `docs/claude-policy.md`（清書・代行・散らかさない）を読んで、ずれていれば伝える |
-| シオン | Discordに「今日の一枚」専用チャンネルとWebhook URLを用意する（ステップ4で使う） |
-| Claude | ステップ4：`prompts/project-instructions.md`・`prompts/morning-brief.md`・`prompts/artifact-spec.md`・`docs/daily-guide.md` を作る。朝の秘書をNotionで1回試して出力例を見せる |
+| シオン | claude.aiにプロジェクト「仕事管理」を作り、`prompts/project-instructions.md` の枠の中を貼る。Notion・Web検索をオン |
+| シオン | Discordに「今日の一枚」チャンネルを作り、Webhook URLをClaude Codeに渡す |
+| Claude | Webhook URLを受け取ったら、`prompts/morning-brief.md` の指示文でスケジュールタスクを登録する（毎日 6:54 JST、Notionコネクタ付き、URLはタスクの中だけ）。1回動かして届くか確かめる |
+| Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（Claude Codeから。シオンの了承後） |
+| 一緒に | `docs/daily-guide.md` のテスト手順で、完了の条件を確認する |
 
 ## Notionの場所（2026-11-25 作成）
 
@@ -62,4 +63,5 @@
 ## 履歴
 
 - 2026-11-25：作業開始。依頼書を `CLAUDE.md` に保存。下調べ。
+- 2026-11-25：ステップ4の文書（project-instructions／morning-brief＋スクリプト／artifact-spec／daily-guide）を作成。朝の秘書のスクリプトを実データで試した（出力例は morning-brief.md）。
 - 2026-11-25：設計書v0.1 → シオン確認「進めてみて」＋目的と2つの要望（清書・代行） → Notion組み立て、設計書v0.2、`docs/claude-policy.md`、`docs/notion-setup.md`。
