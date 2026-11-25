@@ -16,10 +16,10 @@
 
 | 誰 | やること |
 |---|---|
-| シオン | claude.aiにプロジェクト「仕事管理」を作り、`prompts/project-instructions.md` の枠の中を貼る。Notion・Web検索をオン |
-| シオン | Discordに「今日の一枚」チャンネルを作り、Webhook URLをClaude Codeに渡す |
-| Claude | Webhook URLを受け取ったら、`prompts/morning-brief.md` の指示文でスケジュールタスクを登録する（毎日 6:54 JST、Notionコネクタ付き、URLはタスクの中だけ）。1回動かして届くか確かめる |
-| Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（Claude Codeから。シオンの了承後） |
+| シオン | 朝の秘書にNotionをつなぐ。A：claude.aiのスケジュールタスクの画面で「今日の一枚（毎朝）」にNotionコネクタを足す。できなければB |
+| Claude | B：新しいセッション（todo_task を選んで開始）で、スケジュールタスク trig_01SV6cgjoHHg7uqHLH1sz4Hh を消して、同じ指示文で作り直す（Webhook URLはシオンにもう一度もらう。ファイルには書かない）。そのあと1回動かして、Discordに届くか確かめる |
+| シオン | claude.aiの「仕事管理」プロジェクトの中で、Notionをオンにして「今の状況は？」をもう一度試す（指示文は直したので貼り直す） |
+| Claude | 仕事ノートを `prompts/artifact-spec.md` どおりに作り直す（シオンの了承後） |
 | 一緒に | `docs/daily-guide.md` のテスト手順で、完了の条件を確認する |
 
 ## Notionの場所（2026-11-25 作成）
@@ -59,9 +59,12 @@
 | 11/25 | 目的を明記：「シオンが、毎回入力でき、毎日、見たいときに確認でき、心置きなく実行できる」 |
 | 11/25 | Claudeの動き方の方針（清書・代行・散らかさない）を `docs/claude-policy.md` に。担当の選択肢に「Claude」を追加 |
 | 11/25 | 設計書v0.1の表どおりにNotionを組み立てた（シオンの「進めてみて」を承認とした） |
+| 11/25 | 朝の秘書をスケジュールタスクとして登録（trig_01SV6cgjoHHg7uqHLH1sz4Hh、毎日6:54 JST、毎回新しいセッション）。**Notionコネクタが付かなかった**（このセッションが途中でNotionをつないだため、引き継げない）。Discordへのテスト送信は成功（HTTP 204） |
+| 11/25 | claude.aiで「今の状況は？」を試したら、Claude自身の作業の話が返ってきた（プロジェクトの外か、Notionがオフだったと推測）。指示文に「状況＝Notionの中身」「Notionが使えないときは推測で答えない」を足した |
 
 ## 履歴
 
 - 2026-11-25：作業開始。依頼書を `CLAUDE.md` に保存。下調べ。
+- 2026-11-25：朝の秘書を登録（コネクタなし）、Discordテスト送信成功、指示文の取り違え対策。
 - 2026-11-25：ステップ4の文書（project-instructions／morning-brief＋スクリプト／artifact-spec／daily-guide）を作成。朝の秘書のスクリプトを実データで試した（出力例は morning-brief.md）。
 - 2026-11-25：設計書v0.1 → シオン確認「進めてみて」＋目的と2つの要望（清書・代行） → Notion組み立て、設計書v0.2、`docs/claude-policy.md`、`docs/notion-setup.md`。
