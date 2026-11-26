@@ -3,10 +3,10 @@
 ## これは何か
 
 - 毎朝7時ごろ、Notionを読んで「今日の一枚」をDiscordの専用チャンネルに送る、スケジュールタスク（シオン新聞と同じ仕組み）の指示文。
-- **登録はClaude Codeからやる**（シオンが貼る必要はない）。時刻は 6:54（日本時間）。7時ちょうどは混みやすいので少し前にずらす。
-- Discordの投稿用URL（Webhook URL）は、下の `{{DISCORD_WEBHOOK_URL}}` の場所に、**スケジュールタスクに登録するときだけ**入れる。このファイルには書かない。
+- スケジュールタスク「今日の一枚」（毎日 6:54・日本時間）が、毎回このファイルをリポジトリから読んで動く。だから、このファイルを直してpushすれば、次の朝から新しい手順で動く。
+- Discordの投稿用URL（Webhook URL）は、スケジュールタスクの設定の中だけにある。このファイルには `{{DISCORD_WEBHOOK_URL}}` とだけ書く。
 - 判定と文面は、下のスクリプトが作る。だから毎朝、同じルール・同じ形で届く（AIの気分でぶれない）。
-- 2026-11-25に、このスクリプトを実際のNotionのデータで試した。出力例は一番下。
+- 2026-11-26に、このスクリプトを実際のNotionのデータで試した（出力例は、個人の情報が入らないよう作った例のデータで出したもの）。
 
 ## 決めたこと
 
@@ -14,7 +14,9 @@
 |---|---|
 | 読み方 | Notionのビューを読む（無料プランでも回数無制限）。SQLは使わない |
 | 数式の列 | 使わない（Notion MCPでは値が読めないため）。元の列からスクリプトが判定する |
-| 書き込み | 「やる日」が空のタスクに、今日の日付を入れるだけ。状態・次の一歩・削除はしない |
+| やる日の意味 | **始めたい日**。この日から候補に出す。過ぎても失敗とは見なさない（🟠持ち越しの印はやめた。2026-11-26） |
+| 急ぎの印 | 期限だけ。🔴期限切れ／⏰今日まで・明日まで・あとN日（3日以内） |
+| 書き込み | ①選んだタスクのうちやる日が空のものに、今日の日付を入れる ②✓（済）が付いているのに完了になっていないタスクを、完了にする。ほかの列は変えない。消さない |
 | 代行 | しない（無人で動くため） |
 | 失敗したとき | Notionが読めなければ「Claudeアプリで『今日なにやる？』と聞いて」と送る |
 
@@ -29,7 +31,7 @@
 ### 守ること
 
 - 判定と文面は、下のスクリプトが作る。スクリプトの出力を書き換えたり、足したりしない。
-- Notionに書き込むのは「やる日」だけ。スクリプトが選んだタスクに、今日の日付を入れる。ほかの列は変えない。消さない。
+- Notionに書き込むのは2つだけ：スクリプトが選んだタスクの「やる日」と、スクリプトが完了にすると決めたタスクの「状態・完了日・次の一歩」。ほかの列は変えない。消さない。
 - Notionは、ビューを読む方法（notion-query-data-sources の mode "view"）だけで読む。SQLやrowsモードは使わない（無料プランの回数上限があるため）。
 - 数式・集計の列（サイン・集計など）は値ではなく「formulaResult://…」という参照が返る。これで正常。使わない。
 - 固定のパス（/tmp/xxx など）は使わない。作業場所は毎回 mktemp -d で作る。
@@ -51,7 +53,7 @@
    - 失敗したら1回だけやり直す。それでも失敗したら、手順7を行って終わる。
 
 3. 読んだ results の配列を、$D/tasks.json と $D/projects.json に書き出す（ヒアドキュメント）。
-   - 各行の「名前・url・状態・プロジェクト・次の一歩・date:やる日:start・date:期限:start・date:完了日:start・担当・目安時間・最終更新」は、値を変えずにそのまま書く（ほかの列は省いてよい）。
+   - 各行の「名前・url・状態・プロジェクト・次の一歩・済・date:やる日:start・date:期限:start・date:完了日:start・担当・目安時間・最終更新」は、値を変えずにそのまま書く（ほかの列は省いてよい）。
    - プロジェクトは「名前・url・状態・領域・date:開始日:start・date:期限:start」をそのまま書く。
    - 書き出したら件数を確かめる：`python3 -c "import json;print(len(json.load(open('tasks.json'))),len(json.load(open('projects.json'))))"`。Notionから読んだ件数と同じであること。
 
@@ -61,15 +63,20 @@
    python3 brief.py <今日の日付> <通し日> tasks.json projects.json
    ```
 
-   _body.txt（送る本文）と _new_picks.json（やる日を入れるタスクのURL）ができる。出力の最後の行の CHARS が1900を超えていたら、送らずに手順8で報告する。
+   _body.txt（送る本文）、_new_picks.json（やる日を入れるタスクのURL）、_complete.json（完了にするタスク）ができる。出力の最後の行の CHARS が1900を超えていたら、送らずに手順8で報告する。
 
-5. やる日を書き込む：_new_picks.json の各URLに、notion-update-page（command: "update_properties"）で次を入れる。
+5. Notionに書き込む（notion-update-page、command: "update_properties"）。失敗したものは飛ばして続ける（送信は止めない）。
+   - _new_picks.json の各URLに：
 
-   ```json
-   {"date:やる日:start": "<今日の日付>", "date:やる日:is_datetime": 0}
-   ```
+     ```json
+     {"date:やる日:start": "<今日の日付>", "date:やる日:is_datetime": 0}
+     ```
 
-   失敗したものは飛ばして続ける（送信は止めない）。
+   - _complete.json の各項目（url と date）に：
+
+     ```json
+     {"状態": "完了", "date:完了日:start": "<その項目のdate>", "date:完了日:is_datetime": 0, "次の一歩": "__NO__"}
+     ```
 
 6. Discordに送る（_body.txt をそのまま送る）：
 
@@ -89,14 +96,15 @@
    Claudeアプリで「今日なにやる？」と聞いてください。
    ```
 
-8. 最後の報告（3行以内）：送信結果（HTTPコード）／今日の一枚の件数／やる日を書き込んだ件数（失敗があればタスク名）。本文はチャットに貼らない。
+8. 最後の報告（3行以内）：送信結果（HTTPコード）／今日の一枚の件数／やる日を書き込んだ件数と、完了にした件数（失敗があればタスク名）。本文はチャットに貼らない。
 
 ### スクリプト
 
 ```python
 # -*- coding: utf-8 -*-
 # 今日の一枚を作る。使い方: python3 brief.py YYYY-MM-DD 通し日(1-366) tasks.json projects.json
-# 出力: _body.txt（Discordに送る本文）、_new_picks.json（やる日を今日にするタスクのURL）
+# 出力: _body.txt（Discordに送る本文）、_new_picks.json（やる日を今日にするタスクのURL）、
+#       _complete.json（✓が付いていたので完了にするタスク）
 import json, sys, re, datetime as dt
 
 TODAY = dt.date.fromisoformat(sys.argv[1])
@@ -111,6 +119,8 @@ WD = '月火水木金土日'
 MIN = {'15分': 15, '30分': 30, '1時間': 60, '2時間以上': 120}
 HOME = 'https://app.notion.com/p/4237db70148e812197b1e20e3cc80756'
 FAR = dt.date(9999, 12, 31)
+SOON = 3          # 期限が何日以内なら「近い」とするか
+STALE = 14        # 始めたい日から何日たったら「まだやる？」と聞くか
 
 def key(u):
     return re.sub(r'[^0-9a-f]', '', (u or '').lower())[-32:]
@@ -128,6 +138,15 @@ def hm(n):
     h, m = divmod(n, 60)
     return ((f'{h}時間' if h else '') + (f'{m}分' if m else '')) or '0分'
 
+# ── ✓（済）が付いているのに、まだ完了になっていないもの → 完了にする ──
+complete = []
+for t in tasks:
+    if t.get('済') == '__YES__' and t.get('状態') != '完了':
+        d = min(edited(t), TODAY)
+        complete.append({'url': t['url'], 'name': t['名前'], 'date': d.isoformat()})
+        t['状態'] = '完了'          # 以降は完了として数える
+        t['次の一歩'] = '__NO__'
+
 P = {key(p['url']): p for p in projects}
 for t in tasks:
     try:
@@ -136,7 +155,6 @@ for t in tasks:
         rel = []
     p = P.get(key(rel[0])) if rel else None
     st = t.get('状態')
-    t['_p'] = p
     t['_pkey'] = key(p['url']) if p else ''
     t['_pname'] = p['名前'] if p else ''
     t['_pdue'] = day(p, '期限') or FAR
@@ -144,46 +162,43 @@ for t in tasks:
     t['_do'] = day(t, 'やる日')
     t['_idle'] = (TODAY - edited(t)).days
     t['_open'] = st in ('これから', '進行中', '待ち')
-    t['_late'] = t['_open'] and t['_due'] is not None and t['_due'] < TODAY
-    t['_carry'] = (TODAY - t['_do']).days if (st in ('これから', '進行中') and t['_do'] and t['_do'] < TODAY) else 0
+    t['_left'] = (t['_due'] - TODAY).days if (t['_open'] and t['_due']) else None   # 期限まであと何日（マイナス＝過ぎた）
     t['_mine'] = t.get('担当') != 'Claude'
     t['_next'] = t.get('次の一歩') == '__YES__'
 
 active = [p for p in projects if p.get('状態') == '進行中']
 active_keys = {key(p['url']) for p in active}
 
-# ── ☀️ 今日の一枚（シオンのタスクだけ・最大5件）──
-cand = [t for t in tasks if t['_open'] and t['_mine'] and t.get('状態') != '待ち']
-c0 = [t for t in cand if t['_do'] == TODAY]                                            # すでに今日の分
-c1 = sorted([t for t in cand if t['_late'] or t['_due'] == TODAY], key=lambda t: t['_due'])  # 期限切れ・今日まで
-c2 = sorted([t for t in cand if t['_carry'] > 0], key=lambda t: t['_do'])              # 持ち越し（古い順）
-nexts = [t for t in cand if t['_next'] and t['_pkey'] in active_keys]
-c3 = sorted([t for t in nexts if (t['_pdue'] - TODAY).days <= 7], key=lambda t: t['_pdue'])  # 期限7日以内の次の一歩
-c4 = sorted(nexts, key=lambda t: (t['_pdue'], t['_pname']))                            # ほかの次の一歩
+# ── ☀️ 今日の候補（シオンのタスクだけ・最大5件）──
+# やる日＝始めたい日。過ぎても失敗ではない。やる日が先のものは、まだ出さない。
+cand = [t for t in tasks if t.get('状態') in ('これから', '進行中') and t['_mine']
+        and (t['_do'] is None or t['_do'] <= TODAY)]
+g1 = sorted([t for t in cand if t['_left'] is not None and t['_left'] <= SOON], key=lambda t: t['_due'])     # ①期限が3日以内（過ぎたものも）
+g2 = sorted([t for t in cand if t['_do'] is not None], key=lambda t: (t['_do'], t['_pdue'], t['名前']))     # ②始めたい日が来ている（古い順）
+g3 = sorted([t for t in cand if t['_do'] is None and t['_next'] and t['_pkey'] in active_keys],
+            key=lambda t: (t['_pdue'], t['_pname']))                                                     # ③次の一歩
 picked, seen = [], set()
-for t in c0 + c1 + c2 + c3 + c4:
+for t in g1 + g2 + g3:
     if t['url'] in seen:
         continue
     seen.add(t['url'])
     if len(picked) < 5:
         picked.append(t)
 inlist = {t['url'] for t in picked}
-overflow = len({t['url'] for t in c1 + c2} - inlist)
-new_picks = [t['url'] for t in picked if t['_do'] is None]   # やる日が空のものだけ書き込む
+overflow = len({t['url'] for t in g1 + g2} - inlist)
+new_picks = [t['url'] for t in picked if t['_do'] is None]   # やる日が空のものだけ、今日を入れる
 
 def sign(t):
-    if t['_late']:
+    n = t['_left']
+    if n is None or n > SOON:
+        return ''
+    if n < 0:
         return f"🔴期限{md(t['_due'])}"
-    if t['_carry'] >= 3:
-        return f"🟠持ち越し{t['_carry']}日（大きすぎるかも。分ける？やめる？）"
-    if t['_carry'] > 0:
-        return f"🟠持ち越し{t['_carry']}日"
-    if t['_due'] == TODAY:
-        return '⏰今日まで'
-    return ''
+    return {0: '⏰今日まで', 1: '⏰明日まで'}.get(n, f'⏰あと{n}日')
 
 L = [f"☀️ 今日の一枚　{md(TODAY)}({WD[TODAY.weekday()]})", '━━━━━━━━━━━━━━']
 if picked:
+    L.append('上からやれたら十分。残りは明日も候補に出ます')
     for t in picked:
         m = t.get('目安時間')
         L.append(f"□ {t['名前']}" + (f"（{m}）" if m else ''))
@@ -193,11 +208,15 @@ if picked:
     ms = [MIN[t['目安時間']] for t in picked if t.get('目安時間') in MIN]
     if ms:
         more = any(t.get('目安時間') == '2時間以上' for t in picked)
-        L.append(f"合計 約{hm(sum(ms))}" + ('以上' if more else ''))
+        L.append(f"全部やると約{hm(sum(ms))}" + ('以上' if more else ''))
 else:
-    L += ['□ 今日の一枚は白紙です', '　Claudeに「今日なにやる？」と話すと、一緒に選べます']
+    L += ['□ 今日の候補はありません', '　Claudeに「今日なにやる？」と話すと、一緒に選べます']
 
-# ── ❓ これやった？（最大3件・今日の一枚に出したものは除く）──
+if complete:
+    names = '、'.join(c['name'] for c in complete[:3]) + (f' ほか{len(complete) - 3}件' if len(complete) > 3 else '')
+    L += ['', f'✅ ✓の付いた{len(complete)}件を完了にしました（{names}）']
+
+# ── ❓ これやった？（最大3件・今日の候補に出したものは除く）──
 q = []
 for t in sorted([t for t in tasks if t.get('状態') == '待ち' and t['_idle'] >= 7 and t['url'] not in inlist], key=lambda t: -t['_idle']):
     q.append([f"・{t['名前']}", f"　待ち{t['_idle']}日目。返事きた？"])
@@ -206,7 +225,12 @@ for t in sorted([t for t in tasks if t.get('状態') == '進行中' and t['_idle
 ai = sorted([t for t in tasks if t.get('状態') == 'これから' and not t['_mine']], key=lambda t: (t['_pdue'], t['名前']))
 if ai:
     t = ai[DOY % len(ai)]
-    q.append([f"・🤖 {t['名前']}", '　Claudeが調べられます。方針を見て任せる？'])
+    q.append([f"・🤖 {re.sub(r'^🤖\s*', '', t['名前'])}", '　Claudeが調べられます。方針を見て任せる？'])
+stale = sorted([t for t in cand if t['_do'] is not None and (TODAY - t['_do']).days >= STALE and t['url'] not in inlist],
+               key=lambda t: (t['_do'], t['名前']))
+if stale:
+    t = stale[DOY % len(stale)]
+    q.append([f"・{t['名前']}", f"　始めたい日から{(TODAY - t['_do']).days}日。まだやる？分ける？"])
 ideas = sorted([t for t in tasks if t.get('状態') == 'アイデア' and t['_idle'] >= 14], key=lambda t: (-t['_idle'], t['名前']))
 if ideas:
     t = ideas[DOY % len(ideas)]
@@ -215,10 +239,10 @@ q = q[:3]
 if q:
     L += ['', '❓ これやった？'] + [x for it in q for x in it]
 
-# ── 📌 ほかに（プロジェクトの気になる点・入りきらなかった件数）──
+# ── 📌 ほかに（入りきらなかった件数・プロジェクトの気になる点）──
 pin = []
 if overflow:
-    pin.append(f'・期限切れ・持ち越しがあと{overflow}件（Notionの「今日」で全部見られます）')
+    pin.append(f'・ほかに候補が{overflow}件（Notionの「☀️ 今日」「🗂 ボード」で見られます）')
 for p in sorted(active, key=lambda p: (day(p, '期限') or FAR, p['名前'])):
     k = key(p['url'])
     mine = [t for t in tasks if t['_pkey'] == k]
@@ -234,19 +258,21 @@ for p in sorted(active, key=lambda p: (day(p, '期限') or FAR, p['名前'])):
     if mine and min(t['_idle'] for t in mine) >= 7:
         pin.append(f"・「{p['名前']}」が{min(t['_idle'] for t in mine)}日動いていません")
     if not any(t['_next'] and t['_open'] for t in mine):
-        pin.append(f"・「{p['名前']}」に次の一歩がありません")
+        pin.append(f"・「{p['名前']}」の次の一歩を決めよう（Claudeに話すと案が出ます）")
 if len(pin) > 5:
     pin = pin[:4] + [f'・ほか{len(pin) - 4}件']
 if pin:
     L += ['', '📌 ほかに'] + pin
 
-L += ['', '終わったら「〇〇終わった」か、紙の写真をClaudeへ', f'📒 <{HOME}>']
+L += ['', '終わったら「☀️ 今日」で✓。「〇〇終わった」とClaudeに言ってもOK', f'📒 <{HOME}>']
 body = '\n'.join(L)
 open('_body.txt', 'w', encoding='utf-8').write(body)
 json.dump(new_picks, open('_new_picks.json', 'w', encoding='utf-8'), ensure_ascii=False)
+json.dump(complete, open('_complete.json', 'w', encoding='utf-8'), ensure_ascii=False)
 print(body)
 print('---')
 print('NEW_PICKS', json.dumps(new_picks, ensure_ascii=False))
+print('COMPLETE', json.dumps([c['url'] for c in complete], ensure_ascii=False))
 print('CHARS', len(body))
 ```
 
@@ -254,50 +280,51 @@ print('CHARS', len(body))
 
 ---
 
-## 出力例（2026-11-25、実際のNotionのテストデータで実行）
+## 選び方（スクリプトがやっていること）
+
+| 順 | 候補 | 並び |
+|---|---|---|
+| ① | 期限が3日以内のもの（過ぎたものも） | 期限が近い順 |
+| ② | 始めたい日（やる日）が来ているもの | やる日が古い順 |
+| ③ | やる日が空の、進行中プロジェクトの次の一歩 | プロジェクトの期限が近い順 |
+
+- シオンのタスクだけ（担当Claudeと待ちは入れない）。✓が付いたもの、やる日が先のものは入れない。上から5件まで。
+- 入りきらなかった件数は 📌 に出す。
+- ❓（3件まで・今日の候補に出したものは除く）：①待ちのまま7日以上 ②進行中のまま3日以上 ③🤖Claudeに任せられるもの（1日1件・日替わり） ④始めたい日から14日以上たったもの（1日1件・日替わり。「まだやる？分ける？」） ⑤14日以上前のアイデア（1日1件・日替わり）。
+
+## 出力例（作った例のデータで、11/27として実行）
 
 ```
-☀️ 今日の一枚　11/25(水)
+☀️ 今日の一枚　11/27(金)
 ━━━━━━━━━━━━━━
-□ 商品説明を200字で書く（30分）
-　🔴期限11/24・BASEショップ
-□ 入口の燃えるゴミだけ袋に入れる（15分）
-　🟠持ち越し1日・納屋の片付け
-□ 新米の写真を1枚撮る（15分）
-　BASEショップ
-□ 来年使う田んぼの名前を紙に書き出す（15分）
-　来年の米作り計画
-合計 約1時間15分
+上からやれたら十分。残りは明日も候補に出ます
+□ 種籾の手配先と注文の締切を確かめる（15分）
+　⏰明日まで・来年の米作り計画
+□ 本を1か所に集める（30分）
+　自室の片付け
+□ 不燃ごみを捨てに行く（2時間以上）
+　納屋の片付け
+全部やると約2時間45分以上
+
+✅ ✓の付いた1件を完了にしました（来年使う田んぼの名前を紙に書き出す）
 
 ❓ これやった？
-・🤖 中古の播種機の候補を3件探す
-　Claudeが調べられます。方針を見て任せる？
-
-終わったら「〇〇終わった」か、紙の写真をClaudeへ
-📒 <https://app.notion.com/p/4237db70148e812197b1e20e3cc80756>
-```
-
-- やる日を入れるタスク：「商品説明を200字で書く」「新米の写真を1枚撮る」「来年使う田んぼの名前を紙に書き出す」の3件（持ち越しの「燃えるゴミ」は元のやる日のまま）。試しのときは、Notionへの書き込みとDiscordへの送信はしていない。
-- 328文字。Discordの上限（2000文字）まで余裕がある。
-
-### 10日間なにも動かなかった場合（12/5として試した）
-
-```
-❓ これやった？
-・苗の注文締切をJAに聞く
-　待ち10日目。返事きた？
 ・金属ゴミを1か所に集める
-　進行中のまま10日。終わった？
-・🤖 中古の播種機の候補を3件探す
+　進行中のまま4日。終わった？
+・🤖 入れ物の候補を3件探す
 　Claudeが調べられます。方針を見て任せる？
 
 📌 ほかに
-・「BASEショップ」が遅れ気味（期間の62%・進み25%）
-・「BASEショップ」が10日動いていません
+・「来年の米作り計画」の次の一歩を決めよう（Claudeに話すと案が出ます）
+
+終わったら「☀️ 今日」で✓。「〇〇終わった」とClaudeに言ってもOK
+📒 <https://app.notion.com/p/4237db70148e812197b1e20e3cc80756>
 ```
 
-（持ち越しが3日以上のタスクには「大きすぎるかも。分ける？やめる？」が付く）
+- 「本を1か所に集める」は、始めたい日（11/26）を過ぎているが、印は付かない（失敗ではないため）。
+- 「田んぼの名前」は前の日に✓が付いていたので、完了にしてから数えた。次の一歩がなくなったので 📌 に出た。
+- 429文字。Discordの上限（2000文字）まで余裕がある。
 
 ## 紙への写し方
 
-各タスクの**1行目（□の行）だけ**を紙に写す。2行目は補足（サインとプロジェクト名）なので写さなくてよい。
+各タスクの**1行目（□の行）だけ**を紙に写す。2行目は補足（印とプロジェクト名）なので写さなくてよい。
