@@ -261,11 +261,11 @@ for p in sorted(active, key=lambda p: (day(p, '期限') or FAR, p['名前'])):
     pd, ps = day(p, '期限'), day(p, '開始日')
     if pd and pd < TODAY:
         pin.append(f"・「{p['名前']}」の期限（{md(pd)}）を過ぎています。延ばす？")
-    elif pd and ps and (pd - ps).days > 0 and real:
+    elif pd and ps and ps <= TODAY and (pd - ps).days > 0 and real:
         el, pr = (TODAY - ps).days / (pd - ps).days, len(done) / len(real)
         if el - pr >= 0.3:
             pin.append(f"・「{p['名前']}」が遅れ気味（期間の{round(el * 100)}%・進み{round(pr * 100)}%）")
-    if mine and min(t['_idle'] for t in mine) >= 7:
+    if mine and (ps is None or ps <= TODAY) and min(t['_idle'] for t in mine) >= 7:   # 始まる前のプロジェクトは数えない
         pin.append(f"・「{p['名前']}」が{min(t['_idle'] for t in mine)}日動いていません")
     if not any(t['_next'] and t['_open'] for t in mine):
         pin.append(f"・「{p['名前']}」の次の一歩を決めよう（Claudeに話すと案が出ます）")
