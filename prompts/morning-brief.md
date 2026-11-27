@@ -54,6 +54,7 @@
 
 3. 読んだ results の配列を、$D/tasks.json と $D/projects.json に書き出す（ヒアドキュメント）。
    - 各行の「名前・url・状態・プロジェクト・次の一歩・済・date:やる日:start・date:期限:start・date:完了日:start・担当・目安時間・最終更新」は、値を変えずにそのまま書く（ほかの列は省いてよい）。
+   - 列の名前はNotionで変えられることがある。タイトルの列が「タスク」、チェックの列が「✓」や名前なし（`""`）になっていても、**読んだときの名前のまま**書く（スクリプトが読み替える）。
    - プロジェクトは「名前・url・状態・領域・date:開始日:start・date:期限:start」をそのまま書く。
    - 書き出したら件数を確かめる：`python3 -c "import json;print(len(json.load(open('tasks.json'))),len(json.load(open('projects.json'))))"`。Notionから読んだ件数と同じであること。
 
@@ -113,6 +114,15 @@ def load(path):
     x = json.load(open(path, encoding='utf-8'))
     return x.get('results', []) if isinstance(x, dict) else x
 tasks, projects = load(sys.argv[3]), load(sys.argv[4])
+# 列の名前がNotionで変えられても読めるようにする（タイトル＝名前／タスク、チェック＝済／✓／名前なし）
+for t in tasks:
+    if '名前' not in t:
+        t['名前'] = t.get('タスク') or t.get('タイトル') or '（名前なし）'
+    if '済' not in t:
+        for k in ('✓', '✅', ''):
+            if k in t:
+                t['済'] = t[k]
+                break
 
 JST = dt.timezone(dt.timedelta(hours=9))
 WD = '月火水木金土日'
